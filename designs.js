@@ -15,10 +15,12 @@ function createVis(errors, map_data, state_abbrev, listings_data, state_cnt, cat
   var color_scale = d3.scaleSequential(d3.interpolateReds)
     .domain(val_range);
   
+  // define variables used later
   // create leaflet map using map_data
   var map = new L.Map('leaflet_map', {center: [37, -95], zoom: 4})
     .addLayer(new L.TileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'));
   var geojson;
+  var state_selected;
   
   // functions inside functions!
   // to handle events on the features
@@ -26,9 +28,9 @@ function createVis(errors, map_data, state_abbrev, listings_data, state_cnt, cat
   // defining events on geoJSON for each feature/state
   function featureEvents(feature, layer) {
     layer.on({
-      mouseover: featureHighlight,
-      mouseout: featureResetHighlight
-      //click: zoomToFeature
+      mouseover: featureMouseover,
+      mouseout: featureMouseout,
+      click: featureClick
     });
   }
 
@@ -43,7 +45,8 @@ function createVis(errors, map_data, state_abbrev, listings_data, state_cnt, cat
   }
 
   // on mouseover event
-  function featureHighlight(e) {
+  // make state border white and bigger
+  function featureMouseover(e) {
     var layer = e.target;
     
     layer.setStyle({
@@ -55,8 +58,38 @@ function createVis(errors, map_data, state_abbrev, listings_data, state_cnt, cat
   }
 
   // on mouseout event
-  function featureResetHighlight(e) {
-    geojson.resetStyle(e.target);
+  // set state border back to thin black default
+  function featureMouseout(e) {
+    //geojson.resetStyle(e.target);
+    var layer = e.target;
+    
+    layer.setStyle({
+      weight: 1,
+      color: 'black'
+    });
+  }
+  
+  // testing click functions
+  function featureClick(e) {
+    var layer = e.target;
+    
+    if(state_selected != layer) {
+      if(state_selected !== undefined) {
+        geojson.resetStyle(state_selected);
+      }
+      
+      layer.setStyle({
+        fillColor: 'red',
+        fillOpacity: 1
+      });
+      
+      state_selected = layer;
+    }
+    else {
+      geojson.resetStyle(state_selected);
+      state_selected = undefined;
+    }
+    control.update(layer.feature.properties);
   }
   
   // add map_data to leaflet map
@@ -70,19 +103,23 @@ function createVis(errors, map_data, state_abbrev, listings_data, state_cnt, cat
   geojson.eachLayer(function(layer) {
     layer._path.setAttribute('state', layer.feature.properties.NAME);
     layer._path.setAttribute('job_total', layer.feature.properties.JOB_TOTAL);
-    g1 = layer;
   });
-  g2 = geojson;
   
-  // test
-  /*
-  geojson.eachLayer(function(layer) {
-    if(!(layer.feature.properties.NAME == 'Texas')) {
-      layer._path.setAttribute('fill', 'black');
-      layer._path.setAttribute('opacity', 1.0);
-    }
-  });
-  */
+  // adding custom control to select job categories
+  var control = L.control({position: 'topright'});
+  
+  control.onAdd = function(map) {
+    this._div = L.DomUtil.create('div', 'job_filter');
+    this.update();
+    return this._div;
+  }
+  
+  control.update = function(properties) {
+    this._div.innerHTML = '<h3>' + (properties === undefined ? '' : properties.NAME) + '</h3>';
+    console.log(properties);
+  }
+  
+  control.addTo(map);
 }
 
 
