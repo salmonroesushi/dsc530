@@ -6,9 +6,18 @@ function createVis(errors, map_data, state_abbrev, listings_data, state_cnt, cat
   console.log(state_cnt);
   console.log(cat_cnt);
   
-  state_counts = mergeAbbrevCount(state_abbrev, state_cnt);
+  // create object with state:jobcount to add to feature properties
+  var state_counts = mergeAbbrevCount(state_abbrev, state_cnt);
+  
+  // create object with state:abbrev to add to feature properties
+  var state_invert = {};
+  for(var key in state_abbrev) {
+    state_invert[state_abbrev[key]] = key;
+  }
+  
   map_data.features.forEach(function(feature) {
     feature.properties['JOB_TOTAL'] = state_counts[feature.properties.NAME];
+    feature.properties['ABBREVIATION'] = state_invert[feature.properties.NAME];
   });
   
   var val_range = d3.extent(map_data.features.map(x => x.properties.JOB_TOTAL));
@@ -17,8 +26,15 @@ function createVis(errors, map_data, state_abbrev, listings_data, state_cnt, cat
   
   // define variables used later
   // create leaflet map using map_data
-  var map = new L.Map('leaflet_map', {center: [37, -95], zoom: 4})
+  var map = new L.Map('leaflet_map', {
+      center: [37, -95],
+      zoom: 4,
+      zoomControl: false
+    })
     .addLayer(new L.TileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'));
+  
+  L.control.zoom({position: 'bottomleft'}).addTo(map);
+  
   var geojson;
   var state_selected;
   
@@ -103,10 +119,11 @@ function createVis(errors, map_data, state_abbrev, listings_data, state_cnt, cat
   geojson.eachLayer(function(layer) {
     layer._path.setAttribute('state', layer.feature.properties.NAME);
     layer._path.setAttribute('job_total', layer.feature.properties.JOB_TOTAL);
+    g2=layer;
   });
   
   // adding custom control to select job categories
-  var control = L.control({position: 'topright'});
+  var control = L.control({position: 'topleft'});
   
   control.onAdd = function(map) {
     this._div = L.DomUtil.create('div', 'job_filter');
@@ -116,10 +133,13 @@ function createVis(errors, map_data, state_abbrev, listings_data, state_cnt, cat
   
   control.update = function(properties) {
     this._div.innerHTML = '<h3>' + (properties === undefined ? '' : properties.NAME) + '</h3>';
+    console.log(this._div);
     console.log(properties);
   }
   
   control.addTo(map);
+  
+  g1=map;
 }
 
 
