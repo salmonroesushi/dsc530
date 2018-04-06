@@ -27,15 +27,20 @@ function createVis(errors, map_data, state_abbrev, listings_data, state_jobs, jo
   color_scale = d3.scaleSequential(d3.interpolateReds)
     .domain(val_range);
   */
-  color_scale = getColorScale(map_data, 'total');
+  setColorScale(map_data, 'total');
   
   // define variables used later
   // create leaflet map using map_data
   map = new L.Map('leaflet_map', {
     center: [39, -96],
     zoom: 4,
+    minZoom: 2,
+    maxZoom: 5,
     zoomControl: false,
-    doubleClickZoom: false
+    doubleClickZoom: false,
+    // don't let user loop around the map
+    maxBounds: L.latLngBounds(L.latLng(-89.98155760646617, -180), L.latLng(89.99346179538875, 180)),
+    maxBoundsViscosity: 1.0
   });
   map.addLayer(new L.TileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'));
   
@@ -62,12 +67,10 @@ function createVis(errors, map_data, state_abbrev, listings_data, state_jobs, jo
   filter_control.addTo(map);
 }
 
-function getColorScale(map_data, category) {
+function setColorScale(map_data, category) {
   var range = d3.extent(map_data.features.map(x => x.properties.JOBS[category]));
-  var scale = d3.scaleSequential(d3.interpolateReds)
+  color_scale = d3.scaleSequential(d3.interpolateReds)
     .domain(range);
-  
-  return scale;
 }
 
 function updateMapCategory(map_data, category)
@@ -75,11 +78,11 @@ function updateMapCategory(map_data, category)
   if(category === 'none') {
     category = 'total';
   }
-  var scale = getColorScale(map_data, category);
+  setColorScale(map_data, category);
   
   geojson.eachLayer(function(layer) {
     layer.setStyle( {
-      fillColor: scale((layer.feature.properties.JOBS[category] === undefined ? 0 : layer.feature.properties.JOBS[category])),
+      fillColor: color_scale((layer.feature.properties.JOBS[category] === undefined ? 0 : layer.feature.properties.JOBS[category])),
       fillOpacity: 1.0
     });
   });
