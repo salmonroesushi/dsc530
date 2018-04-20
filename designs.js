@@ -74,10 +74,10 @@ function createVis(errors, topo_json, state_id, listings_data, state_jobs, job_c
   console.log(getPlainText(listings_data[0].job_description));
   var tmp_str = getPlainText(listings_data[0].job_description);
   console.log(tmp_str.split(' '));
-  /*
+  
   var lemmatizer = new Lemmatizer();
   console.log(lemmatizer.only_lemmas('leaves'));
-  */
+  
 }
 
 function setColorScale(map_data, category) {

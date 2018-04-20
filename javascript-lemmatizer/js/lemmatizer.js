@@ -14,22 +14,24 @@ if (typeof String.endsWith !== "function") {
 
 // Lemmatizer constructor
 var Lemmatizer = function() {
+  localStorage.clear();
+  
   this.wn_files = {
     noun: [
-      '../dict/index.noun.json',
-      '../dict/noun.exc.json'
+      'https://raw.githubusercontent.com/takafumir/javascript-lemmatizer/master/dict/index.noun.json',
+      'https://raw.githubusercontent.com/takafumir/javascript-lemmatizer/master/dict/noun.exc.json'
     ],
     verb: [
-      '../dict/index.verb.json',
-      '../dict/verb.exc.json'
+      'https://raw.githubusercontent.com/takafumir/javascript-lemmatizer/master/dict/index.verb.json',
+      'https://raw.githubusercontent.com/takafumir/javascript-lemmatizer/master/dict/verb.exc.json'
     ],
     adj:  [
-      '../dict/index.adj.json',
-      '../dict/adj.exc.json'
+      'https://raw.githubusercontent.com/takafumir/javascript-lemmatizer/master/dict/index.adj.json',
+      'https://raw.githubusercontent.com/takafumir/javascript-lemmatizer/master/dict/adj.exc.json'
     ],
     adv:  [
-      '../dict/index.adv.json',
-      '../dict/adv.exc.json'
+      'https://raw.githubusercontent.com/takafumir/javascript-lemmatizer/master/dict/index.adv.json',
+      'https://raw.githubusercontent.com/takafumir/javascript-lemmatizer/master/dict/adv.exc.json'
     ]
   };
 
