@@ -72,12 +72,18 @@ function createVis(errors, topo_json, state_id, listings_data, state_jobs, job_c
   
   console.log(listings_data[0].job_description);
   console.log(getPlainText(listings_data[0].job_description));
+  
+  // need a way to remove stopwords
   var tmp_str = getPlainText(listings_data[0].job_description);
   console.log(tmp_str.split(' '));
   
   var lemmatizer = new Lemmatizer();
-  console.log(lemmatizer.only_lemmas('leaves'));
+  //console.log(lemmatizer.only_lemmas('leaves'));
   
+  var tmp_split = tmp_str.split(' ');
+  tmp_split.forEach(function(x) {
+    console.log(lemmatizer.only_lemmas(x));
+  });
 }
 
 function setColorScale(map_data, category) {
@@ -85,9 +91,19 @@ function setColorScale(map_data, category) {
 }
 
 function getPlainText(desc) {
-  var tmp = document.createElement('div');
-  tmp.innerHTML = desc;
-  return tmp.innerText;
+  // get text from HTML body
+  var elem = document.createElement('div');
+  elem.innerHTML = desc;
+  var inner = elem.innerText;
+  
+  // remove special characters
+  inner = inner
+               .replace(/[\u00A0\u1680​\u180e\u2000-\u2009\u200a​\u200b​\u202f\u205f​\u3000]/g, ' ') // replace some unicode whitespaces with a regular one
+               .replace(/[\n]/g, ' ') // replace newlines with whitespace
+               .replace(/[^a-zA-Z0-9 -]/g, '') // remove non-alphanumeric chars
+               .replace(/([a-zA-Z]+)(-)\B/g, '$1') // remove hyphens not followed by chars
+               .replace(/\s+/g, ' '); // trim extra whitespaces
+  return inner;
 }
 
 // turn abbreviation object and state job count object into new object
