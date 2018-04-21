@@ -58,38 +58,44 @@ function createVis(errors, topo_json, state_id, listings_data, state_jobs, job_c
       .attr('state_ab', x => x.state_ab)
       .attr('state_name', x => x.state_name)
       .attr('jobs', x => x.jobs)
-      .attr('d', path);
+      .attr('d', path)
+      .on('mouseover', function(x) {
+        d3.select(this).style('fill', 'red');
+      })
+      .on('mouseout', function(x) {
+        d3.select(this).style('fill', 'black');
+      });
   
   canvas.append('path')
     .attr('class', 'state-borders')
     .attr('d', path(topojson.mesh(topo_json, topo_json.objects.states, function(a, b) { return a !== b; })));
+  
+  console.log(listings_data[0].job_description);
+  
+  var tmp_str = getPlainText(listings_data[0].job_description);
+  console.log(tmp_str);
+  var tmp_arr = removeStopwords(tmp_str.split(' '));
+  console.log(tmp_arr);
+  
+  var lemmatizer = new Lemmatizer();
+  //console.log(lemmatizer.only_lemmas('leaves'));
+  
+  tmp_arr.forEach(function(x) {
+    console.log(JSON.stringify(lemmatizer.only_lemmas(x)));
+  });
   
   /*
   var val_range = d3.extent(map_data.features.map(x => x.properties.JOBS.total));
   var color_scale = d3.scaleSequential(d3.interpolateReds)
     .domain(val_range);
   */
-  
-  console.log(listings_data[0].job_description);
-  console.log(getPlainText(listings_data[0].job_description));
-  
-  // need a way to remove stopwords
-  var tmp_str = getPlainText(listings_data[0].job_description);
-  console.log(tmp_str.split(' '));
-  
-  var lemmatizer = new Lemmatizer();
-  //console.log(lemmatizer.only_lemmas('leaves'));
-  
-  var tmp_split = tmp_str.split(' ');
-  tmp_split.forEach(function(x) {
-    console.log(lemmatizer.only_lemmas(x));
-  });
 }
 
 function setColorScale(map_data, category) {
   
 }
 
+// return only text from job description 
 function getPlainText(desc) {
   // get text from HTML body
   var elem = document.createElement('div');
