@@ -1,8 +1,16 @@
 .state-borders {
   fill: none;
   stroke: #fff;
-  stroke-width: 0.5px;
+  stroke-width: 1.5px;
   stroke-linejoin: round;
   stroke-linecap: round;
   pointer-events: none;
 }
+
+/*
+In the designs, how is job density measured?
+The visualizations seem to show population but perhaps this is just as a placeholder vis.
+How does the histogram aggregate? by keyword or job category? Is it actually a bar chart?
+In any case, it seems that being able to see the labels would be important.
+How does the choropleth scale change when a different job category is selected; legend?
+*/

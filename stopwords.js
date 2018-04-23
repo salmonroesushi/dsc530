@@ -1,5 +1,6 @@
 // list of NLTK stopwords from https://gist.github.com/sebleier/554280
 
+// lowercase input array and return with stopwords filtered out
 function removeStopwords(arr) {
   var tmp_arr = arr.map(x => x.toLowerCase());
   

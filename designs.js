@@ -1,18 +1,18 @@
 function createVis(errors, topo_json, state_id, listings_data, state_jobs, job_categories)  {
-  console.log('TOPO_JSON');
-  console.log(topo_json);
+  logger.dev('TOPO_JSON');
+  logger.dev(topo_json);
   
-  console.log('STATE_ID');
-  console.log(state_id);
+  logger.dev('STATE_ID');
+  logger.dev(state_id);
   
-  console.log('LISTINGS_DATA');
-  console.log(listings_data);
+  logger.dev('LISTINGS_DATA');
+  logger.dev(listings_data);
   
-  console.log('STATE_JOBS');
-  console.log(state_jobs);
+  logger.dev('STATE_JOBS');
+  logger.dev(state_jobs);
   
-  console.log('JOB_CATEGORIES');
-  console.log(job_categories);
+  logger.dev('JOB_CATEGORIES');
+  logger.dev(job_categories);
   
   // change array into obj with state_id as key to easily add to features
   state_id_invert = {};
@@ -22,8 +22,8 @@ function createVis(errors, topo_json, state_id, listings_data, state_jobs, job_c
       state_name: x.STATE_NAME
     };
   });
-  console.log('STATE_ID_INVERT');
-  console.log(state_id_invert);
+  logger.dev('STATE_ID_INVERT');
+  logger.dev(state_id_invert);
   
   var width = 960;
   var height = 600;
@@ -32,15 +32,15 @@ function createVis(errors, topo_json, state_id, listings_data, state_jobs, job_c
   var path = d3.geoPath();
   var features = topojson.feature(topo_json, topo_json.objects.states).features;
   
-  //console.log(topojson.feature(topo_json, topo_json.objects.states));
+  //logger.dev(topojson.feature(topo_json, topo_json.objects.states));
   
   features.forEach(function(x) {
     x.state_ab = state_id_invert[x.id].state_ab;
     x.state_name = state_id_invert[x.id].state_name;
     x.jobs = JSON.stringify((state_jobs[x.state_ab] === undefined ? {'total':0} : state_jobs[x.state_ab]));
   });
-  console.log('FEATURES');
-  console.log(features);
+  logger.dev('FEATURES');
+  logger.dev(features);
   
   // create map
   var canvas = d3.select('#svg_map')
@@ -70,19 +70,10 @@ function createVis(errors, topo_json, state_id, listings_data, state_jobs, job_c
     .attr('class', 'state-borders')
     .attr('d', path(topojson.mesh(topo_json, topo_json.objects.states, function(a, b) { return a !== b; })));
   
-  console.log(listings_data[0].job_description);
+  logger.dev(listings_data[0].job_description);
   
-  var tmp_str = getPlainText(listings_data[0].job_description);
-  console.log(tmp_str);
-  var tmp_arr = removeStopwords(tmp_str.split(' '));
-  console.log(tmp_arr);
-  
-  var lemmatizer = new Lemmatizer();
-  //console.log(lemmatizer.only_lemmas('leaves'));
-  
-  tmp_arr.forEach(function(x) {
-    console.log(JSON.stringify(lemmatizer.only_lemmas(x)));
-  });
+  var lemmas = getLemmasFromDesc(listings_data[0].job_description);
+  logger.dev(lemmas);
   
   /*
   var val_range = d3.extent(map_data.features.map(x => x.properties.JOBS.total));
@@ -95,7 +86,21 @@ function setColorScale(map_data, category) {
   
 }
 
-// return only text from job description 
+// get lemmas from job description
+function getLemmasFromDesc(desc) {
+  var desc_plain = getPlainText(desc);
+  var desc_arr = removeStopwords(desc_plain.split(' '));
+  
+  // use set so don't need to remove dupes later
+  var lemma_set = new Set();
+  desc_arr.forEach(function(x) {
+    lemmatizer.only_lemmas(x).forEach(x => lemma_set.add(x));
+  });
+  
+  return Array.from(lemma_set);
+}
+
+// return only text from HTML description 
 function getPlainText(desc) {
   // get text from HTML body
   var elem = document.createElement('div');
@@ -132,5 +137,9 @@ function projectLoad() {
     .defer(d3.json, "https://raw.githubusercontent.com/salmonroesushi/dsc530/global/data/job_categories.json")
     .await(createVis);
 }
+
+var lemmatizer = new Lemmatizer();
+var logger = new Logger();
+logger.setLogLevel(logger.LogLevel.DEV);
 
 window.onload = projectLoad;
