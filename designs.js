@@ -1,3 +1,33 @@
+// processing data and stuffing it all into features
+function generateFeatures(topo_json, state_id, listings_data, state_jobs, job_categories) {
+  // change array into obj with ID as key to easily add to features
+  var state_id_invert = invertStateId(state_id);
+  logger.dev('STATE_ID_INVERT');
+  logger.dev(state_id_invert);
+  
+  // create features from topo_json and add additional data
+  var feats = topojson.feature(topo_json, topo_json.objects.states).features;
+  feats.forEach(function(x) {
+    x.state_ab = state_id_invert[x.id].state_ab;
+    x.state_name = state_id_invert[x.id].state_name;
+    x.job_detail = [];
+    x.jobs = JSON.stringify((state_jobs[x.state_ab] === undefined ? {'total':0} : state_jobs[x.state_ab]));
+  });
+  logger.dev('FEATURES');
+  logger.dev(feats);
+  
+  // some listings have no category. Make sure to account for this
+  //listings_data.forEach(x => logger.dev(x.category_info == ''));
+  
+  logger.dev(listings_data[0].job_description);
+  logger.dev(getLemmasFromDesc(listings_data[0].job_description));
+  
+  // add each job w/ categories and lemmas to respective state
+  addJobDetails(feats, listings_data);
+  
+  return feats;
+}
+
 function createVis(errors, topo_json, state_id, listings_data, state_jobs, job_categories)  {
   logger.dev('TOPO_JSON');
   logger.dev(topo_json);
@@ -14,33 +44,16 @@ function createVis(errors, topo_json, state_id, listings_data, state_jobs, job_c
   logger.dev('JOB_CATEGORIES');
   logger.dev(job_categories);
   
-  // change array into obj with state_id as key to easily add to features
-  state_id_invert = {};
-  state_id.forEach(function(x) {
-    state_id_invert[x.STATE] = {
-      state_ab: x.STUSAB,
-      state_name: x.STATE_NAME
-    };
-  });
-  logger.dev('STATE_ID_INVERT');
-  logger.dev(state_id_invert);
-  
   var width = 960;
   var height = 600;
   
   var projection = d3.geoAlbersUsa().scale(1000);
   var path = d3.geoPath();
-  var features = topojson.feature(topo_json, topo_json.objects.states).features;
+  var features = generateFeatures(topo_json, state_id, listings_data, state_jobs, job_categories);
   
-  //logger.dev(topojson.feature(topo_json, topo_json.objects.states));
-  
-  features.forEach(function(x) {
-    x.state_ab = state_id_invert[x.id].state_ab;
-    x.state_name = state_id_invert[x.id].state_name;
-    x.jobs = JSON.stringify((state_jobs[x.state_ab] === undefined ? {'total':0} : state_jobs[x.state_ab]));
-  });
   logger.dev('FEATURES');
   logger.dev(features);
+  foobar = listings_data;
   
   // create map
   var canvas = d3.select('#svg_map')
@@ -70,20 +83,58 @@ function createVis(errors, topo_json, state_id, listings_data, state_jobs, job_c
     .attr('class', 'state-borders')
     .attr('d', path(topojson.mesh(topo_json, topo_json.objects.states, function(a, b) { return a !== b; })));
   
-  logger.dev(listings_data[0].job_description);
+  // change state attr after creating
+  canvas.selectAll('g.states>path')
+    .data(features)
+    .attr('foo', x => x.state_ab);
   
-  var lemmas = getLemmasFromDesc(listings_data[0].job_description);
-  logger.dev(lemmas);
-  
-  /*
-  var val_range = d3.extent(map_data.features.map(x => x.properties.JOBS.total));
+  var job_extent = d3.extent(features.map(x => x.job_detail.length));
   var color_scale = d3.scaleSequential(d3.interpolateReds)
-    .domain(val_range);
-  */
+    .domain(job_extent);
+  
+  canvas.selectAll('g.states>path')
+    .data(features)
+    .attr('fill', (x => color_scale(x.job_detail.length)));
 }
 
 function setColorScale(map_data, category) {
   
+}
+
+// add each job w/ categories and lemmas to respective state
+function addJobDetails(feats, listings) {
+  listings.forEach(function(listing) {
+    // replace empty string category with text empty for later filtering
+    var cats = listing.category_info.split(',').map(x => (x === '' ? 'empty' : x));
+    
+    var feat = getFeatByAbbreviation(feats, listing.state);
+    feat.job_detail.push({
+      'categories': cats,
+      'lemmas': getLemmasFromDesc(listing.job_description)
+    });
+  });
+}
+
+function getFeatByAbbreviation(feats, abbr) {
+  var index = feats.findIndex(x => x.state_ab === abbr);
+  if(index < 0) {
+    logger.error('State abbreviation "' + abbr + '" not found in Feature array');
+  }
+  
+  return feats[index];
+}
+
+// change array into obj with ID as key to easily add to features
+function invertStateId(state_id) {
+  var invert = {};
+  state_id.forEach(function(x) {
+    invert[x.STATE] = {
+      state_ab: x.STUSAB,
+      state_name: x.STATE_NAME
+    };
+  });
+  
+  return invert;
 }
 
 // get lemmas from job description
@@ -143,3 +194,5 @@ var logger = new Logger();
 logger.setLogLevel(logger.LogLevel.DEV);
 
 window.onload = projectLoad;
+
+var foobar;

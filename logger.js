@@ -16,7 +16,7 @@ var Logger = function() {
     
     this.level = lvl;
     var level_label = Object.keys(this.LogLevel).find(key => this.LogLevel[key] === lvl);
-    console.log('LOG LEVEL SET TO ' + level_label);
+    //console.log('LOG LEVEL SET TO ' + level_label);
   };
   
   this.error = function(msg) {
